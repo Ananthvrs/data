@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Entry System</title>
+    <title>Advanced Data Entry System</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -12,14 +12,14 @@
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             background: #ffffff;
             padding: 25px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
-        h2 {
+        h2, h3 {
             text-align: center;
             color: #333;
         }
@@ -32,12 +32,16 @@
             font-weight: bold;
             color: #555;
         }
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], input[type="date"] {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
         }
         button {
             background-color: #28a745;
@@ -52,16 +56,25 @@
         button:hover {
             background-color: #218838;
         }
-        h3 {
-            margin-top: 30px;
-            color: #333;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 5px;
+        .cancel-btn {
+            background-color: #6c757d;
+        }
+        .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+        .filter-section {
+            margin-top: 25px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
+            margin-top: 20px;
         }
         th, td {
             border: 1px solid #ddd;
@@ -75,6 +88,28 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        .edit-btn {
+            background-color: #ffc107;
+            color: black;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .edit-btn:hover {
+            background-color: #e0a800;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
         .actions {
             margin-top: 15px;
             display: flex;
@@ -83,21 +118,25 @@
         .clear-btn {
             background-color: #dc3545;
             width: auto;
-            padding: 5px 10px;
+            padding: 8px 15px;
             font-size: 14px;
-        }
-        .clear-btn:hover {
-            background-color: #c82333;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Data Entry Portal</h2>
+    <h2>Data Entry Portal with Date & Edit Options</h2>
     
     <!-- Data Entry Form -->
     <form id="dataForm">
+        <input type="hidden" id="editIndex" value="">
+        
+        <div class="form-group">
+            <label for="entryDate">தேதி (Date):</label>
+            <input type="date" id="entryDate" required>
+        </div>
+
         <div class="form-group">
             <label for="name">பெயர் (Name):</label>
             <input type="text" id="name" required placeholder="பெயரை உள்ளிடவும்">
@@ -118,19 +157,38 @@
             <input type="number" id="evening" required placeholder="எண் மதிப்பை உள்ளிடவும்">
         </div>
         
-        <button type="submit">பதிவு செய் (Save Entry)</button>
+        <div class="btn-group">
+            <button type="submit" id="saveButton">பதிவு செய் (Save Entry)</button>
+            <button type="button" id="cancelButton" class="cancel-btn" style="display:none;" onclick="resetForm()">ரத்து செய் (Cancel)</button>
+        </div>
     </form>
+
+    <!-- Filter Section (Date-wise View) -->
+    <div class="filter-section">
+        <div style="flex-grow: 1;">
+            <label for="filterDate">தேதி வாரியாக பார்க்க (Filter by Date):</label>
+            <input type="date" id="filterDate">
+        </div>
+        <div>
+            <button type="button" onclick="filterData()" style="padding: 10px 20px;">தேடு (Search)</button>
+        </div>
+        <div>
+            <button type="button" onclick="loadData()" style="padding: 10px 20px; background-color: #6c757d;">அனைத்தையும் காட்டு (Reset Filter)</button>
+        </div>
+    </div>
 
     <!-- Data View Section -->
     <h3>சேமிக்கப்பட்ட விவரங்கள் (View Entries)</h3>
     <table id="dataTable">
         <thead>
             <tr>
+                <th>தேதி & நேரம்</th>
                 <th>பெயர்</th>
                 <th>காலை</th>
                 <th>மதியம்</th>
                 <th>மாலை</th>
                 <th>மொத்தம் (Total)</th>
+                <th>செயல்பாடுகள் (Actions)</th>
             </tr>
         </thead>
         <tbody id="tableBody">
@@ -144,8 +202,11 @@
 </div>
 
 <script>
-    // பக்கத்தை திறக்கும்போது சேமிக்கப்பட்ட டேட்டாவை ஏற்றுதல்
-    document.addEventListener("DOMContentLoaded", loadData);
+    document.addEventListener("DOMContentLoaded", () => {
+        // இயல்புநிலையாக இன்றைய தேதியை ஃபார்மில் செட் செய்தல்
+        document.getElementById('entryDate').valueAsDate = new Date();
+        loadData();
+    });
 
     const form = document.getElementById('dataForm');
     const tableBody = document.getElementById('tableBody');
@@ -153,52 +214,118 @@
     form.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // உள்ளீட்டு மதிப்புகளைப் பெறுதல்
+        const editIndex = document.getElementById('editIndex').value;
+        const entryDate = document.getElementById('entryDate').value;
         const name = document.getElementById('name').value;
         const morning = parseFloat(document.getElementById('morning').value) || 0;
         const afternoon = parseFloat(document.getElementById('afternoon').value) || 0;
         const evening = parseFloat(document.getElementById('evening').value) || 0;
-
-        // மூன்று வேளைகளின் கூட்டுத்தொகை (Total)
         const total = morning + afternoon + evening;
 
-        // புதிய தரவுப் பொருள் (Object)
-        const entryData = { name, morning, afternoon, evening, total };
+        // தற்போதைய நேரத்தை (Time) பெறுதல்
+        const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const dateTimeStr = `${entryDate} (${currentTime})`;
 
-        // LocalStorage-ல் சேமித்தல்
         let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
-        allData.push(entryData);
-        localStorage.setItem('entryRecords', JSON.stringify(allData));
 
-        // ஃபார்மை ரீசெட் செய்தல் மற்றும் டேபிளைப் புதுப்பித்தல்
-        form.reset();
+        if (editIndex === "") {
+            // புதிய பதிவு
+            const entryData = { entryDate, dateTimeStr, name, morning, afternoon, evening, total };
+            allData.push(entryData);
+        } else {
+            // ஏற்கனவே உள்ள பதிவை மாற்றுதல் (Edit)
+            allData[editIndex].entryDate = entryDate;
+            allData[editIndex].dateTimeStr = `${entryDate} (Edited)`;
+            allData[editIndex].name = name;
+            allData[editIndex].morning = morning;
+            allData[editIndex].afternoon = afternoon;
+            allData[editIndex].evening = evening;
+            allData[editIndex].total = total;
+        }
+
+        localStorage.setItem('entryRecords', JSON.stringify(allData));
+        resetForm();
         loadData();
     });
 
-    // டேட்டாவை டேபிளில் காண்பிக்கும் ஃபங்ஷன்
-    function loadData() {
+    // டேட்டாவை டேபிளில் காண்பித்தல்
+    function loadData(dataToShow = null) {
         tableBody.innerHTML = "";
-        let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+        let allData = dataToShow || JSON.parse(localStorage.getItem('entryRecords')) || [];
 
         if (allData.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" style="color: #777;">தகவல்கள் எதுவும் இல்லை</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="7" style="color: #777;">தகவல்கள் எதுவும் இல்லை</td></tr>`;
             return;
         }
 
-        allData.forEach(data => {
+        allData.forEach((data, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
+                <td>${data.dateTimeStr || data.entryDate}</td>
                 <td>${data.name}</td>
                 <td>${data.morning}</td>
                 <td>${data.afternoon}</td>
                 <td>${data.evening}</td>
                 <td><strong>${data.total}</strong></td>
+                <td>
+                    <button class="edit-btn" onclick="editEntry(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
+                </td>
             `;
             tableBody.appendChild(row);
         });
     }
 
-    // அனைத்து டேட்டாவையும் நீக்கும் ஃபங்ஷன்
+    // பதிவை திருத்த (Edit) தேர்வு செய்தல்
+    function editEntry(index) {
+        let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+        const data = allData[index];
+
+        document.getElementById('editIndex').value = index;
+        document.getElementById('entryDate').value = data.entryDate;
+        document.getElementById('name').value = data.name;
+        document.getElementById('morning').value = data.morning;
+        document.getElementById('afternoon').value = data.afternoon;
+        document.getElementById('evening').value = data.evening;
+
+        document.getElementById('saveButton').innerText = "புதுப்பி (Update Entry)";
+        document.getElementById('cancelButton').style.display = "block";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ஃபார்மை இயல்பு நிலைக்கு கொண்டு வருதல்
+    function resetForm() {
+        form.reset();
+        document.getElementById('editIndex').value = "";
+        document.getElementById('entryDate').valueAsDate = new Date();
+        document.getElementById('saveButton').innerText = "பதிவு செய் (Save Entry)";
+        document.getElementById('cancelButton').style.display = "none";
+    }
+
+    // குறிப்பிட்ட தேதியை மட்டும் தேடிப் பார்த்தல் (Date-wise Filter)
+    function filterData() {
+        const filterDate = document.getElementById('filterDate').value;
+        if (!filterDate) {
+            alert("தயவுசெய்து தேதியைத் தேர்ந்தெடுக்கவும்!");
+            return;
+        }
+
+        let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+        const filtered = allData.filter(item => item.entryDate === filterDate);
+        loadData(filtered);
+    }
+
+    // குறிப்பிட்ட பதிவை நீக்குதல்
+    function deleteEntry(index) {
+        if (confirm("நிச்சயமாக இந்த பதிவை நீக்க விரும்புகிறீர்களா?")) {
+            let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+            allData.splice(index, 1);
+            localStorage.setItem('entryRecords', JSON.stringify(allData));
+            loadData();
+        }
+    }
+
+    // அனைத்து டேட்டாவையும் நீக்குதல்
     function clearData() {
         if (confirm("நிச்சயமாக அனைத்து தரவுகளையும் அழிக்க விரும்புகிறீர்களா?")) {
             localStorage.removeItem('entryRecords');
