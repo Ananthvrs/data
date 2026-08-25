@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Online Data Entry Portal</title>
+    <title>GitHub Actions Data Entry Portal</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -77,9 +77,6 @@
             font-size: 16px;
             width: 100%;
         }
-        button:hover {
-            opacity: 0.9;
-        }
         .cancel-btn {
             background-color: #6c757d;
         }
@@ -137,14 +134,14 @@
 <body>
 
 <div class="container">
-    <h2>GitHub Online Data Entry Portal</h2>
+    <h2>Secure Data Entry Portal</h2>
     
     <div class="nav-buttons">
-        <button type="button" class="nav-btn active" id="navEntry" onclick="switchPage('entry')">டேட்டா பதிவு செய் (Data Entry)</button>
-        <button type="button" class="nav-btn" id="navView" onclick="switchPage('view')">டேட்டாவைப் பார் (View Entries)</button>
+        <button type="button" class="nav-btn active" id="navEntry" onclick="switchPage('entry')">டேட்டா பதிவு செய்</button>
+        <button type="button" class="nav-btn" id="navView" onclick="switchPage('view')">டேட்டாவைப் பார்</button>
     </div>
 
-    <div id="loading">GitHub-உடன் இணைக்கிறது, காத்திருக்கவும்...</div>
+    <div id="loading">தரவுகள் ஏற்றப்படுகின்றன...</div>
 
     <!-- Page 1: Form -->
     <div id="entryPage" class="page active">
@@ -162,23 +159,23 @@
             </div>
             
             <div class="form-group">
-                <label for="morning">காலை (Morning - Number):</label>
+                <label for="morning">காலை (Morning):</label>
                 <input type="number" id="morning" required placeholder="எண் மதிப்பை உள்ளிடவும்">
             </div>
             
             <div class="form-group">
-                <label for="afternoon">மதியம் (Afternoon - Number):</label>
+                <label for="afternoon">மதியம் (Afternoon):</label>
                 <input type="number" id="afternoon" required placeholder="எண் மதிப்பை உள்ளிடவும்">
             </div>
             
             <div class="form-group">
-                <label for="evening">மாலை (Evening - Number):</label>
+                <label for="evening">மாலை (Evening):</label>
                 <input type="number" id="evening" required placeholder="எண் மதிப்பை உள்ளிடவும்">
             </div>
             
             <div class="btn-group">
                 <button type="submit" id="saveButton">பதிவு செய் (Save Entry)</button>
-                <button type="button" id="cancelButton" class="cancel-btn" style="display:none;" onclick="resetForm()">ரத்து செய் (Cancel)</button>
+                <button type="button" id="cancelButton" class="cancel-btn" style="display:none;" onclick="resetForm()">ரத்து செய்</button>
             </div>
         </form>
     </div>
@@ -187,18 +184,18 @@
     <div id="viewPage" class="page">
         <div class="filter-section">
             <div style="flex-grow: 1;">
-                <label for="filterDate">தேதி வாரியாக பார்க்க (Filter by Date):</label>
+                <label for="filterDate">தேதி வாரியாக பார்க்க:</label>
                 <input type="date" id="filterDate">
             </div>
             <div>
-                <button type="button" onclick="filterData()" style="padding: 10px 20px;">தேடு (Search)</button>
+                <button type="button" onclick="filterData()" style="padding: 10px 20px;">தேடு</button>
             </div>
             <div>
-                <button type="button" onclick="fetchDataFromGitHub()" style="padding: 10px 20px; background-color: #6c757d;">அனைத்தையும் காட்டு (Reset)</button>
+                <button type="button" onclick="fetchData()" style="padding: 10px 20px; background-color: #6c757d;">அனைத்தையும் காட்டு</button>
             </div>
         </div>
 
-        <h3>GitHub-ல் சேமிக்கப்பட்ட விவரங்கள்</h3>
+        <h3>சேமிக்கப்பட்ட விவரங்கள்</h3>
         <table id="dataTable">
             <thead>
                 <tr>
@@ -219,20 +216,13 @@
 </div>
 
 <script>
-    // --- GitHub அமைப்புகள் ---
-    const GITHUB_USERNAME = 'YOUR_GITHUB_USERNAME'; // உங்கள் GitHub Username-ஐ இங்கே தரவும்
-    const REPO_NAME = 'YOUR_REPO_NAME';             // உங்கள் Repository பெயரைக் கொடுக்கவும்
-    const FILE_PATH = 'data.json';                  // டேட்டா சேமிக்கப்படும் கோப்பின் பெயர்
-    const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN';       // உங்கள் GitHub Personal Access Token-ஐ இங்கே தரவும்
-
-    const apiURL = `https://api.github.com/repos/${GITHUB_USERNAME}/${REPO_NAME}/contents/${FILE_PATH}`;
-
+    // உங்கள் GitHub Pages முகவரியில் உள்ள data.json கோப்பின் பாதை
+    const dataFileURL = 'data.json?t=' + new Date().getTime(); // Cache வராமல் இருக்க
     let allData = [];
-    let fileSha = ""; // GitHub-ல் ஃபைலை update செய்ய இந்த SHA தேவைப்படும்
 
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('entryDate').valueAsDate = new Date();
-        fetchDataFromGitHub();
+        fetchData();
     });
 
     function switchPage(pageName) {
@@ -247,7 +237,7 @@
         } else {
             document.getElementById('viewPage').classList.add('active');
             document.getElementById('navView').classList.add('active');
-            fetchDataFromGitHub();
+            fetchData();
         }
     }
 
@@ -255,116 +245,36 @@
     const tableBody = document.getElementById('tableBody');
     const loading = document.getElementById('loading');
 
-    // GitHub-ல் இருந்து டேட்டாவைப் பெறுதல் (Fetch)
-    function fetchDataFromGitHub() {
+    function fetchData() {
         loading.style.display = "block";
-        fetch(apiURL, {
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json'
-            }
-        })
+        fetch('data.json?' + new Date().getTime())
         .then(response => {
-            if (response.status === 404) {
-                // ஒருவேளை data.json கோப்பு இல்லை எனاில் காலியாக வைத்துக்கொள்ளும்
-                return { content: btoa(JSON.stringify([])), sha: "" };
-            }
+            if (!response.ok) return [];
             return response.json();
         })
         .then(data => {
             loading.style.display = "none";
-            if (data.content) {
-                fileSha = data.sha;
-                const decodedJson = JSON.parse(atob(data.content));
-                allData = Array.isArray(decodedJson) ? decodedJson : [];
-            } else {
-                allData = [];
-            }
+            allData = Array.isArray(data) ? data : [];
             renderTable(allData);
         })
         .catch(error => {
             loading.style.display = "none";
-            console.error('Error fetching data:', error);
-            tableBody.innerHTML = `<tr><td colspan="7" style="color: red;">டேட்டாவைப் பெற முடியவில்லை. அமைப்புகளைச் சரிபார்க்கவும்.</td></tr>`;
-        });
-    }
-
-    // GitHub-க்கு டேட்டாவை அனுப்புவது / சேமிப்பது (Save/Update)
-    function saveDatatoGitHub(updatedData, successMessage) {
-        loading.style.display = "block";
-        const contentEncoded = btoa(unescape(encodeURIComponent(JSON.stringify(updatedData, null, 2))));
-
-        const bodyData = {
-            message: "Update data.json via Web Portal",
-            content: contentEncoded,
-            sha: fileSha
-        };
-
-        fetch(apiURL, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/vnd.github.v3+json'
-            },
-            body: JSON.stringify(bodyData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            loading.style.display = "none";
-            if (data.content) {
-                fileSha = data.content.sha;
-                alert(successMessage);
-                resetForm();
-                switchPage('view');
-            } else {
-                alert("சேமிப்பதில் பிழை ஏற்பட்டது.");
-            }
-        })
-        .catch(error => {
-            loading.style.display = "none";
-            console.error('Error saving data:', error);
-            alert("இணைய இணைப்பைச் சரிபார்க்கவும்.");
+            allData = [];
+            renderTable(allData);
         });
     }
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-
-        const editIndex = document.getElementById('editIndex').value;
-        const entryDate = document.getElementById('entryDate').value;
-        const name = document.getElementById('name').value;
-        const morning = parseFloat(document.getElementById('morning').value) || 0;
-        const afternoon = parseFloat(document.getElementById('afternoon').value) || 0;
-        const evening = parseFloat(document.getElementById('evening').value) || 0;
-        const total = morning + afternoon + evening;
-
-        const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const dateTimeStr = `${entryDate} (${currentTime})`;
-
-        if (editIndex === "") {
-            const entryData = { dateTimeStr, name, morning, afternoon, evening, total };
-            allData.push(entryData);
-        } else {
-            allData[editIndex].dateTimeStr = `${entryDate} (Edited)`;
-            allData[editIndex].name = name;
-            allData[editIndex].morning = morning;
-            allData[editIndex].afternoon = afternoon;
-            allData[editIndex].evening = evening;
-            allData[editIndex].total = total;
-        }
-
-        saveDatatoGitHub(allData, "வெற்றிகரமாக GitHub-ல் சேமிக்கப்பட்டது!");
+        alert("GitHub-ல் நேரடியாக பிரவுசர் மூலம் கோப்புகளை உடனுக்குடன் மாற்றுவதற்கு GitHub API அல்லது Server தேவையாகும். GitHub Actions மூலமாக கோப்பை மாற்ற GitHub Commit செய்ய வேண்டும்.\n\nமிக எளிமையான ஆன்லைன் முறைக்கு 'Google Sheets & Apps Script' பயன்படுத்துவதே சிறந்த வழியாகும்.");
     });
 
     function renderTable(dataToShow) {
         tableBody.innerHTML = "";
-
         if (dataToShow.length === 0) {
             tableBody.innerHTML = `<tr><td colspan="7" style="color: #777;">தகவல்கள் எதுவும் இல்லை</td></tr>`;
             return;
         }
-
         dataToShow.forEach((data, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
@@ -374,55 +284,10 @@
                 <td>${data.afternoon}</td>
                 <td>${data.evening}</td>
                 <td><strong>${data.total}</strong></td>
-                <td>
-                    <button class="edit-btn" onclick="editEntry(${index})">Edit</button>
-                    <button class="delete-btn" onclick="deleteEntry(${index})">Delete</button>
-                </td>
+                <td>-</td>
             `;
             tableBody.appendChild(row);
         });
-    }
-
-    function editEntry(index) {
-        const data = allData[index];
-        document.getElementById('editIndex').value = index;
-        if(data.dateTimeStr) {
-            const datePart = data.dateTimeStr.split(' ')[0];
-            document.getElementById('entryDate').value = datePart;
-        }
-        document.getElementById('name').value = data.name;
-        document.getElementById('morning').value = data.morning;
-        document.getElementById('afternoon').value = data.afternoon;
-        document.getElementById('evening').value = data.evening;
-
-        document.getElementById('saveButton').innerText = "புதுப்பி (Update Entry)";
-        document.getElementById('cancelButton').style.display = "block";
-        switchPage('entry');
-    }
-
-    function resetForm() {
-        form.reset();
-        document.getElementById('editIndex').value = "";
-        document.getElementById('entryDate').valueAsDate = new Date();
-        document.getElementById('saveButton').innerText = "பதிவு செய் (Save Entry)";
-        document.getElementById('cancelButton').style.display = "none";
-    }
-
-    function filterData() {
-        const filterDate = document.getElementById('filterDate').value;
-        if (!filterDate) {
-            alert("தயவுசெய்து தேதியைத் தேர்ந்தெடுக்கவும்!");
-            return;
-        }
-        const filtered = allData.filter(item => item.dateTimeStr && item.dateTimeStr.startsWith(filterDate));
-        renderTable(filtered);
-    }
-
-    function deleteEntry(index) {
-        if (confirm("நிச்சயமாக இந்த பதிவை GitHub-ல் இருந்து நீக்க விரும்புகிறீர்களா?")) {
-            allData.splice(index, 1);
-            saveDatatoGitHub(allData, "வெற்றிகரமாக நீக்கப்பட்டு GitHub புதுப்பிக்கப்பட்டது!");
-        }
     }
 </script>
 
