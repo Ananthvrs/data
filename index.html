@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Entry System</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        h3 {
+            margin-top: 30px;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .actions {
+            margin-top: 15px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .clear-btn {
+            background-color: #dc3545;
+            width: auto;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Data Entry Portal</h2>
+    
+    <!-- Data Entry Form -->
+    <form id="dataForm">
+        <div class="form-group">
+            <label for="name">பெயர் (Name):</label>
+            <input type="text" id="name" required placeholder="பெயரை உள்ளிடவும்">
+        </div>
+        
+        <div class="form-group">
+            <label for="morning">காலை (Morning - Number):</label>
+            <input type="number" id="morning" required placeholder="எண் மதிப்பை உள்ளிடவும்">
+        </div>
+        
+        <div class="form-group">
+            <label for="afternoon">மதியம் (Afternoon - Number):</label>
+            <input type="number" id="afternoon" required placeholder="எண் மதிப்பை உள்ளிடவும்">
+        </div>
+        
+        <div class="form-group">
+            <label for="evening">மாலை (Evening - Number):</label>
+            <input type="number" id="evening" required placeholder="எண் மதிப்பை உள்ளிடவும்">
+        </div>
+        
+        <button type="submit">பதிவு செய் (Save Entry)</button>
+    </form>
+
+    <!-- Data View Section -->
+    <h3>சேமிக்கப்பட்ட விவரங்கள் (View Entries)</h3>
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>பெயர்</th>
+                <th>காலை</th>
+                <th>மதியம்</th>
+                <th>மாலை</th>
+                <th>மொத்தம் (Total)</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <!-- டேட்டா இங்கே நிரப்பப்படும் -->
+        </tbody>
+    </table>
+
+    <div class="actions">
+        <button type="button" class="clear-btn" onclick="clearData()">அனைத்தையும் அழி (Clear All)</button>
+    </div>
+</div>
+
+<script>
+    // பக்கத்தை திறக்கும்போது சேமிக்கப்பட்ட டேட்டாவை ஏற்றுதல்
+    document.addEventListener("DOMContentLoaded", loadData);
+
+    const form = document.getElementById('dataForm');
+    const tableBody = document.getElementById('tableBody');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // உள்ளீட்டு மதிப்புகளைப் பெறுதல்
+        const name = document.getElementById('name').value;
+        const morning = parseFloat(document.getElementById('morning').value) || 0;
+        const afternoon = parseFloat(document.getElementById('afternoon').value) || 0;
+        const evening = parseFloat(document.getElementById('evening').value) || 0;
+
+        // மூன்று வேளைகளின் கூட்டுத்தொகை (Total)
+        const total = morning + afternoon + evening;
+
+        // புதிய தரவுப் பொருள் (Object)
+        const entryData = { name, morning, afternoon, evening, total };
+
+        // LocalStorage-ல் சேமித்தல்
+        let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+        allData.push(entryData);
+        localStorage.setItem('entryRecords', JSON.stringify(allData));
+
+        // ஃபார்மை ரீசெட் செய்தல் மற்றும் டேபிளைப் புதுப்பித்தல்
+        form.reset();
+        loadData();
+    });
+
+    // டேட்டாவை டேபிளில் காண்பிக்கும் ஃபங்ஷன்
+    function loadData() {
+        tableBody.innerHTML = "";
+        let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
+
+        if (allData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" style="color: #777;">தகவல்கள் எதுவும் இல்லை</td></tr>`;
+            return;
+        }
+
+        allData.forEach(data => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${data.name}</td>
+                <td>${data.morning}</td>
+                <td>${data.afternoon}</td>
+                <td>${data.evening}</td>
+                <td><strong>${data.total}</strong></td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // அனைத்து டேட்டாவையும் நீக்கும் ஃபங்ஷன்
+    function clearData() {
+        if (confirm("நிச்சயமாக அனைத்து தரவுகளையும் அழிக்க விரும்புகிறீர்களா?")) {
+            localStorage.removeItem('entryRecords');
+            loadData();
+        }
+    }
+</script>
+
+</body>
+</html>
