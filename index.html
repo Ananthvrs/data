@@ -110,23 +110,12 @@
         .delete-btn:hover {
             background-color: #c82333;
         }
-        .actions {
-            margin-top: 15px;
-            display: flex;
-            justify-content: flex-end;
-        }
-        .clear-btn {
-            background-color: #dc3545;
-            width: auto;
-            padding: 8px 15px;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Data Entry Portal with Date & Edit Options</h2>
+    <h2>Data Entry Portal</h2>
     
     <!-- Data Entry Form -->
     <form id="dataForm">
@@ -195,15 +184,10 @@
             <!-- டேட்டா இங்கே நிரப்பப்படும் -->
         </tbody>
     </table>
-
-    <div class="actions">
-        <button type="button" class="clear-btn" onclick="clearData()">அனைத்தையும் அழி (Clear All)</button>
-    </div>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        // இயல்புநிலையாக இன்றைய தேதியை ஃபார்மில் செட் செய்தல்
         document.getElementById('entryDate').valueAsDate = new Date();
         loadData();
     });
@@ -222,18 +206,15 @@
         const evening = parseFloat(document.getElementById('evening').value) || 0;
         const total = morning + afternoon + evening;
 
-        // தற்போதைய நேரத்தை (Time) பெறுதல்
         const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         const dateTimeStr = `${entryDate} (${currentTime})`;
 
         let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
 
         if (editIndex === "") {
-            // புதிய பதிவு
             const entryData = { entryDate, dateTimeStr, name, morning, afternoon, evening, total };
             allData.push(entryData);
         } else {
-            // ஏற்கனவே உள்ள பதிவை மாற்றுதல் (Edit)
             allData[editIndex].entryDate = entryDate;
             allData[editIndex].dateTimeStr = `${entryDate} (Edited)`;
             allData[editIndex].name = name;
@@ -248,7 +229,6 @@
         loadData();
     });
 
-    // டேட்டாவை டேபிளில் காண்பித்தல்
     function loadData(dataToShow = null) {
         tableBody.innerHTML = "";
         let allData = dataToShow || JSON.parse(localStorage.getItem('entryRecords')) || [];
@@ -276,7 +256,6 @@
         });
     }
 
-    // பதிவை திருத்த (Edit) தேர்வு செய்தல்
     function editEntry(index) {
         let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
         const data = allData[index];
@@ -293,7 +272,6 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // ஃபார்மை இயல்பு நிலைக்கு கொண்டு வருதல்
     function resetForm() {
         form.reset();
         document.getElementById('editIndex').value = "";
@@ -302,7 +280,6 @@
         document.getElementById('cancelButton').style.display = "none";
     }
 
-    // குறிப்பிட்ட தேதியை மட்டும் தேடிப் பார்த்தல் (Date-wise Filter)
     function filterData() {
         const filterDate = document.getElementById('filterDate').value;
         if (!filterDate) {
@@ -315,20 +292,11 @@
         loadData(filtered);
     }
 
-    // குறிப்பிட்ட பதிவை நீக்குதல்
     function deleteEntry(index) {
         if (confirm("நிச்சயமாக இந்த பதிவை நீக்க விரும்புகிறீர்களா?")) {
             let allData = JSON.parse(localStorage.getItem('entryRecords')) || [];
             allData.splice(index, 1);
             localStorage.setItem('entryRecords', JSON.stringify(allData));
-            loadData();
-        }
-    }
-
-    // அனைத்து டேட்டாவையும் நீக்குதல்
-    function clearData() {
-        if (confirm("நிச்சயமாக அனைத்து தரவுகளையும் அழிக்க விரும்புகிறீர்களா?")) {
-            localStorage.removeItem('entryRecords');
             loadData();
         }
     }
