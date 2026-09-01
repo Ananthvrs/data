@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JioTV Live IPTV Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <title>JioTV IPTV Web Player</title>
     <style>
         * {
             box-sizing: border-box;
@@ -15,20 +14,20 @@
         body {
             background-color: #121212;
             color: #ffffff;
+            padding: 15px;
             max-width: 480px;
             margin: 0 auto;
-            padding: 12px;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .logo-area {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         .youtube-icon {
             background-color: #ff0000;
@@ -44,7 +43,7 @@
         }
         .icons {
             display: flex;
-            gap: 8px;
+            gap: 10px;
         }
         .icon-btn {
             background: #2a2a2a;
@@ -60,10 +59,11 @@
         }
         .player-container {
             width: 100%;
-            height: 220px;
+            height: 210px;
             background-color: #000;
             border-radius: 12px;
             overflow: hidden;
+            position: relative;
             margin-bottom: 10px;
         }
         video {
@@ -73,12 +73,12 @@
         }
         .current-show {
             background: #1e1e1e;
-            padding: 12px;
+            padding: 10px;
             border-radius: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
         }
         .show-title {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             margin-bottom: 4px;
         }
@@ -89,15 +89,15 @@
         .filters {
             display: flex;
             gap: 8px;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             overflow-x: auto;
-            padding-bottom: 4px;
+            padding-bottom: 5px;
         }
         .filter-btn {
             background: #2a2a2a;
             border: none;
             color: white;
-            padding: 6px 14px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             white-space: nowrap;
@@ -105,12 +105,13 @@
         }
         .filter-btn.active {
             background: #5a3d40;
+            color: #fff;
         }
         .channel-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            max-height: 350px;
+            gap: 10px;
+            max-height: 300px;
             overflow-y: auto;
         }
         .channel-item {
@@ -142,7 +143,7 @@
         }
         .channel-playing {
             font-size: 11px;
-            color: #888;
+            color: #aaa;
         }
         .footer {
             text-align: center;
@@ -153,7 +154,6 @@
     </style>
 </head>
 <body>
-
     <div class="header">
         <div class="logo-area">
             <span class="youtube-icon">▶</span>
@@ -171,39 +171,45 @@
 
     <div class="current-show">
         <div class="show-title" id="currentShowTitle">சேனலைத் தேர்ந்தெடுக்கவும்</div>
-        <div class="show-time" id="currentShowTime">IPTV Live Stream Player</div>
+        <div class="show-time" id="currentShowTime">Live IPTV Stream</div>
     </div>
 
     <div class="filters">
         <button class="filter-btn active">📅 Today Live</button>
         <button class="filter-btn">⚙️ All Channels</button>
-        <button class="filter-btn">⭐ Favorites</button>
+        <button class="filter-btn">⭐ Premium</button>
     </div>
 
     <div class="channel-list" id="channelList">
-        <div style="text-align: center; color: #777; padding: 20px;">சேனல்கள் ஏற்றப்படுகின்றன...</div>
+        <div style="text-align: center; color: #777; padding: 20px;">M3U பட்டியல் ஏற்றப்படுகிறது...</div>
     </div>
 
     <div class="footer">Powered by IPTV-ORG</div>
+
+    <!-- HLS.js லைப்ரரி -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
         const m3uUrl = 'https://iptv-org.github.io/iptv/index.m3u';
         
         async function loadChannels() {
             try {
-                // CORS சிக்கலைத் தவிர்க்க பப்ளிக் ப்ராக்ஸி அல்லது நேரடியாக fetch செய்யப்படுகிறது
+                // CORS தடையை தவிர்க்க பப்ளிக் ப்ராக்ஸி (CORS Proxy) பயன்படுத்தப்பட்டுள்ளது
                 const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(m3uUrl);
                 const response = await fetch(proxyUrl);
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
                 const data = await response.text();
                 parseM3U(data);
             } catch (error) {
-                console.error("Error loading M3U:", error);
-                document.getElementById('channelList').innerHTML = '<div style="color:red; text-align:center;">சேனல் பட்டியலை ஏற்றுவதில் பிழை.</div>';
+                console.error(error);
+                document.getElementById('channelList').innerHTML = '<div style="color:red; text-align:center;">வலைத்தளம் இணைப்பில் பிழை. இணைய இணைப்பைச் சரிபார்க்கவும்.</div>';
             }
         }
 
         function parseM3U(data) {
-            const lines = data.split('\\n');
+            const lines = data.split('\n');
             const channels = [];
             let currentChannel = {};
 
@@ -213,7 +219,7 @@
                     const logoMatch = line.match(/tvg-logo="([^"]*)"/);
                     const nameParts = line.split(',');
                     currentChannel = {
-                        name: nameParts[nameParts.length - 1] || 'Unknown Channel',
+                        name: nameParts[nameParts.length - 1] || 'Unknown',
                         logo: logoMatch ? logoMatch[1] : 'https://via.placeholder.com/48',
                         url: ''
                     };
@@ -226,7 +232,7 @@
                 }
             }
 
-            renderChannels(channels);
+            renderChannels(channels.slice(0, 100)); // முதல் 100 சேனல்களை மட்டும் காண்பிக்கிறது
         }
 
         function renderChannels(channels) {
@@ -238,8 +244,7 @@
                 return;
             }
 
-            // முதல் 100 சேனல்களை மட்டும் காண்பிக்கிறோம் (வேகமாக இயங்க)
-            channels.slice(0, 100).forEach((ch, index) => {
+            channels.forEach((ch, index) => {
                 const item = document.createElement('div');
                 item.className = 'channel-item';
                 item.innerHTML = `
@@ -252,7 +257,6 @@
                 item.onclick = () => playChannel(ch);
                 listEl.appendChild(item);
 
-                // முதல் சேனலை தானாக பிளே செய்ய வைக்க
                 if (index === 0) {
                     playChannel(ch);
                 }
@@ -262,14 +266,14 @@
         function playChannel(ch) {
             const video = document.getElementById('videoPlayer');
             document.getElementById('currentShowTitle').innerText = ch.name;
-            document.getElementById('currentShowTime').innerText = "Live Broadcast • " + ch.url;
-
+            document.getElementById('currentShowTime').innerText = "Streaming: " + ch.url;
+            
             if (Hls.isSupported() && ch.url.includes('.m3u8')) {
                 const hls = new Hls();
                 hls.loadSource(ch.url);
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    video.play().catch(e => console.log("Auto-play blocked:", e));
+                    video.play().catch(e => console.log("Play blocked:", e));
                 });
             } else {
                 video.src = ch.url;
