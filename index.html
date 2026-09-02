@@ -157,11 +157,10 @@
     <div class="header">
         <div class="logo-area">
             <span class="youtube-icon">▶</span>
-            <span class="app-title">JioTV</span>
+            <span class="app-title">LOCAL TV</span>
         </div>
         <div class="icons">
             <button class="icon-btn">🔍</button>
-            <button class="icon-btn">👤</button>
         </div>
     </div>
 
@@ -174,12 +173,6 @@
         <div class="show-time" id="currentShowTime">Live IPTV Stream</div>
     </div>
 
-    <div class="filters">
-        <button class="filter-btn active">📅 Today Live</button>
-        <button class="filter-btn">⚙️ All Channels</button>
-        <button class="filter-btn">⭐ Premium</button>
-    </div>
-
     <div class="channel-list" id="channelList">
         <div style="text-align: center; color: #777; padding: 20px;">M3U பட்டியல் ஏற்றப்படுகிறது...</div>
     </div>
@@ -190,7 +183,7 @@
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        const m3uUrl = 'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8';
+        const m3uUrl = '';
         
         async function loadChannels() {
             try {
